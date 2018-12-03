@@ -1,0 +1,58 @@
+apiVersion: "kubeflow.org/v1alpha2"
+kind: "TFJob"
+metadata:
+  name: "tf-benchmarks-gpu"
+  namespace: kubeflow
+spec:
+  tfReplicaSpecs:
+    PS:
+      replicas: 1
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - args:
+            - python
+            - tf_cnn_benchmarks.py
+            - --batch_size=32
+            - --model=resnet50
+            - --variable_update=parameter_server
+            - --flush_stdout=true
+            - --num_gpus=1
+            image: seekyiyi/benchmarks-gpu:cnn_tf_v1.12_compatible
+            name: tensorflow
+            ports:
+            - containerPort: 2222
+              name: tfjob-port
+            resources:
+              limits:
+                nvidia.com/gpu: 1
+            workingDir: /opt/tf-benchmarks/scripts/tf_cnn_benchmarks
+          restartPolicy: OnFailure
+     Worker:
+        replicas: 1
+        template:
+          metadata:
+            creationTimestamp: null
+          spec:
+            containers:
+            - args:
+              - python
+              - tf_cnn_benchmarks.py
+              - --batch_size=32
+              - --model=resnet50
+              - --variable_update=parameter_server
+              - --flush_stdout=true
+              - --num_gpus=1
+              image: seekyiyi/benchmarks-gpu:cnn_tf_v1.12_compatible
+              name: tensorflow
+              ports:
+              - containerPort: 2222
+                name: tfjob-port
+              resources: {}
+                limits:
+                nvidia.com/gpu: 1
+              workingDir: /opt/tf-benchmarks/scripts/tf_cnn_benchmarks
+            restartPolicy: OnFailure
+
